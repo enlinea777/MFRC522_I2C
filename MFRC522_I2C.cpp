@@ -204,6 +204,7 @@ void MFRC522::PCD_Init() {
 
 	PCD_WriteRegister(TxASKReg, 0x40);		// Default 0x00. Force a 100 % ASK modulation independent of the ModGsPReg register setting
 	PCD_WriteRegister(ModeReg, 0x3D);		// Default 0x3F. Set the preset value for the CRC coprocessor for the CalcCRC command to 0x6363 (ISO 14443-3 part 6.2.4)
+	PCD_WriteRegister(RFCfgReg, (0x07<<4)); // Set Rx Gain to max john 10-04-2018
 	PCD_AntennaOn();						// Enable the antenna driver pins TX1 and TX2 (they were disabled by the reset)
 } // End PCD_Init()
 
@@ -1228,6 +1229,7 @@ void MFRC522::PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned fro
 		else
 			Serial.print(F(" "));
 		Serial.print(uid->uidByte[i], HEX);
+		yield();
 	}
 	Serial.println();
 
@@ -1244,6 +1246,7 @@ void MFRC522::PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned fro
 			// All keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
 			for (byte i = 0; i < 6; i++) {
 				key.keyByte[i] = 0xFF;
+				yield();
 			}
 			PICC_DumpMifareClassicToSerial(uid, piccType, &key);
 			break;
@@ -1303,6 +1306,7 @@ void MFRC522::PICC_DumpMifareClassicToSerial(	Uid *uid,		///< Pointer to Uid str
 		Serial.println(F("Sector Block   0  1  2  3   4  5  6  7   8  9 10 11  12 13 14 15  AccessBits"));
 		for (int8_t i = no_of_sectors - 1; i >= 0; i--) {
 			PICC_DumpMifareClassicSectorToSerial(uid, key, i);
+			yield();	
 		}
 	}
 	PICC_HaltA(); // Halt the PICC before stopping the encrypted session.
@@ -1408,6 +1412,7 @@ void MFRC522::PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to U
 			if ((index % 4) == 3) {
 				Serial.print(F(" "));
 			}
+			yield();
 		}
 		// Parse sector trailer data
 		if (isSectorTrailer) {
@@ -1453,6 +1458,7 @@ void MFRC522::PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to U
 			Serial.print(F(" Adr=0x")); Serial.print(buffer[12], HEX);
 		}
 		Serial.println();
+		yield();
 	}
 
 	return;
@@ -1494,9 +1500,12 @@ void MFRC522::PICC_DumpMifareUltralightToSerial() {
 				else
 					Serial.print(F(" "));
 				Serial.print(buffer[i], HEX);
+				yield();
 			}
 			Serial.println();
+			yield();
 		}
+		yield();
 	}
 } // End PICC_DumpMifareUltralightToSerial()
 
@@ -1665,6 +1674,7 @@ bool MFRC522::MIFARE_SetUid(byte *newUid, byte uidSize, bool logErrors) {
 	for (int i = 0; i < uidSize; i++) {
 		block0_buffer[i] = newUid[i];
 		bcc ^= newUid[i];
+		yield();
 	}
 
 	// Write BCC byte to buffer
