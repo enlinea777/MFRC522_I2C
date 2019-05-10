@@ -1229,7 +1229,9 @@ void MFRC522::PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned fro
 		else
 			Serial.print(F(" "));
 		Serial.print(uid->uidByte[i], HEX);
+		#if defined(ESP8266)
 		yield();
+		#endif
 	}
 	Serial.println();
 
@@ -1246,7 +1248,9 @@ void MFRC522::PICC_DumpToSerial(Uid *uid	///< Pointer to Uid struct returned fro
 			// All keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
 			for (byte i = 0; i < 6; i++) {
 				key.keyByte[i] = 0xFF;
+				#if defined(ESP8266)
 				yield();
+				#endif
 			}
 			PICC_DumpMifareClassicToSerial(uid, piccType, &key);
 			break;
@@ -1306,7 +1310,9 @@ void MFRC522::PICC_DumpMifareClassicToSerial(	Uid *uid,		///< Pointer to Uid str
 		Serial.println(F("Sector Block   0  1  2  3   4  5  6  7   8  9 10 11  12 13 14 15  AccessBits"));
 		for (int8_t i = no_of_sectors - 1; i >= 0; i--) {
 			PICC_DumpMifareClassicSectorToSerial(uid, key, i);
-			yield();	
+			#if defined(ESP8266)
+			yield();
+			#endif
 		}
 	}
 	PICC_HaltA(); // Halt the PICC before stopping the encrypted session.
@@ -1412,7 +1418,9 @@ void MFRC522::PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to U
 			if ((index % 4) == 3) {
 				Serial.print(F(" "));
 			}
+			#if defined(ESP8266)
 			yield();
+			#endif
 		}
 		// Parse sector trailer data
 		if (isSectorTrailer) {
@@ -1458,7 +1466,9 @@ void MFRC522::PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to U
 			Serial.print(F(" Adr=0x")); Serial.print(buffer[12], HEX);
 		}
 		Serial.println();
+		#if defined(ESP8266)
 		yield();
+		#endif
 	}
 
 	return;
@@ -1500,12 +1510,18 @@ void MFRC522::PICC_DumpMifareUltralightToSerial() {
 				else
 					Serial.print(F(" "));
 				Serial.print(buffer[i], HEX);
+				#if defined(ESP8266)
 				yield();
+				#endif
 			}
 			Serial.println();
+			#if defined(ESP8266)
 			yield();
+			#endif
 		}
+		#if defined(ESP8266)
 		yield();
+		#endif
 	}
 } // End PICC_DumpMifareUltralightToSerial()
 
@@ -1674,7 +1690,10 @@ bool MFRC522::MIFARE_SetUid(byte *newUid, byte uidSize, bool logErrors) {
 	for (int i = 0; i < uidSize; i++) {
 		block0_buffer[i] = newUid[i];
 		bcc ^= newUid[i];
+		#if defined(ESP8266)
 		yield();
+		#endif
+		
 	}
 
 	// Write BCC byte to buffer
