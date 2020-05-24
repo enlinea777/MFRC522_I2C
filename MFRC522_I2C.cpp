@@ -99,6 +99,9 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 			byte mask = 0;
 			for (byte i = rxAlign; i <= 7; i++) {
 				mask |= (1 << i);
+				#if defined(ESP8266)
+				yield();
+				#endif
 			}
 			// Read value and tell that we want to read the same address again.
 			byte value = Wire.read();
@@ -109,6 +112,9 @@ void MFRC522::PCD_ReadRegister(	byte reg,		///< The register to read from. One o
 			values[index] = Wire.read();
 		}
 		index++;
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 } // End PCD_ReadRegister()
 
@@ -161,6 +167,9 @@ byte MFRC522::PCD_CalculateCRC(	byte *data,		///< In: Pointer to the data to tra
 		if (--i == 0) {						// The emergency break. We will eventually terminate on this one after 89ms. Communication with the MFRC522 might be down.
 			return STATUS_TIMEOUT;
 		}
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 	PCD_WriteRegister(CommandReg, PCD_Idle);		// Stop calculating CRC for new content in the FIFO.
 
@@ -220,6 +229,9 @@ void MFRC522::PCD_Reset() {
 	// Wait for the PowerDown bit in CommandReg to be cleared
 	while (PCD_ReadRegister(CommandReg) & (1<<4)) {
 		// PCD still restarting - unlikely after waiting 50ms, but better safe than sorry.
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 } // End PCD_Reset()
 
@@ -298,6 +310,9 @@ bool MFRC522::PCD_PerformSelfTest() {
 		if (n & 0x04) {						// CRCIRq bit set - calculation done
 			break;
 		}
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 	PCD_WriteRegister(CommandReg, PCD_Idle);		// Stop calculating CRC for new content in the FIFO.
 
@@ -336,6 +351,9 @@ bool MFRC522::PCD_PerformSelfTest() {
 		if (result[i] != pgm_read_byte(&(reference[i]))) {
 			return false;
 		}
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 
 	// Test passed; all is good.
@@ -412,6 +430,9 @@ byte MFRC522::PCD_CommunicateWithPICC(	byte command,		///< The command to execut
 		if (--i == 0) {						// The emergency break. If all other condions fail we will eventually terminate on this one after 35.7ms. Communication with the MFRC522 might be down.
 			return STATUS_TIMEOUT;
 		}
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 
 	// Stop now if any errors except collisions were detected.
@@ -627,7 +648,11 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 			}
 			for (count = 0; count < bytesToCopy; count++) {
 				buffer[index++] = uid->uidByte[uidIndex + count];
+			#if defined(ESP8266)
+			yield();
+			#endif	
 			}
+			
 		}
 		// Now that the data has been copied we need to include the 8 bits in CT in currentLevelKnownBits
 		if (useCascadeTag) {
@@ -704,6 +729,9 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 					// Run loop again to do the SELECT.
 				}
 			}
+			#if defined(ESP8266)
+			yield();
+			#endif
 		} // End of while (!selectDone)
 
 		// We do not check the CBB - it was constructed by us above.
@@ -713,6 +741,9 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 		bytesToCopy		= (buffer[2] == PICC_CMD_CT) ? 3 : 4;
 		for (count = 0; count < bytesToCopy; count++) {
 			uid->uidByte[uidIndex + count] = buffer[index++];
+			#if defined(ESP8266)
+			yield();
+			#endif
 		}
 
 		// Check response SAK (Select Acknowledge)
@@ -734,6 +765,9 @@ byte MFRC522::PICC_Select(	Uid *uid,			///< Pointer to Uid struct. Normally outp
 			uidComplete = true;
 			uid->sak = responseBuffer[0];
 		}
+		#if defined(ESP8266)
+		yield();
+		#endif
 	} // End of while (!uidComplete)
 
 	// Set correct uid->size
@@ -805,9 +839,15 @@ byte MFRC522::PCD_Authenticate(byte command,		///< PICC_CMD_MF_AUTH_KEY_A or PIC
 	sendData[1] = blockAddr;
 	for (byte i = 0; i < MF_KEY_SIZE; i++) {	// 6 key bytes
 		sendData[2+i] = key->keyByte[i];
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 	for (byte i = 0; i < 4; i++) {				// The first 4 bytes of the UID
 		sendData[8+i] = uid->uidByte[i];
+		#if defined(ESP8266)
+		yield();
+		#endif
 	}
 
 	// Start the authentication.
